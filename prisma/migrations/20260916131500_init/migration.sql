@@ -17,7 +17,10 @@ CREATE TABLE "professional_link" (
     "label" STRING NOT NULL,
     "url" STRING(2048) NOT NULL,
 
-    CONSTRAINT "professional_link_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "professional_link_pkey" PRIMARY KEY ("id"),
+    INDEX "professional_link_profile_id_idx" ("profile_id"),
+    CONSTRAINT "professional_link_profile_id_label_key" UNIQUE ("profile_id", "label"),
+    CONSTRAINT "professional_link_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -26,7 +29,10 @@ CREATE TABLE "skill" (
     "profile_id" UUID NOT NULL,
     "name" STRING NOT NULL,
 
-    CONSTRAINT "skill_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "skill_pkey" PRIMARY KEY ("id"),
+    INDEX "skill_profile_id_idx" ("profile_id"),
+    CONSTRAINT "skill_profile_id_name_key" UNIQUE ("profile_id", "name"),
+    CONSTRAINT "skill_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -39,7 +45,9 @@ CREATE TABLE "work_experience" (
     "started_at" TIMESTAMP(3) NOT NULL,
     "ended_at" TIMESTAMP(3),
 
-    CONSTRAINT "work_experience_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "work_experience_pkey" PRIMARY KEY ("id"),
+    INDEX "work_experience_profile_id_idx" ("profile_id"),
+    CONSTRAINT "work_experience_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -50,35 +58,7 @@ CREATE TABLE "project" (
     "description" STRING NOT NULL,
     "url" STRING(2048) NOT NULL,
 
-    CONSTRAINT "project_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "project_pkey" PRIMARY KEY ("id"),
+    INDEX "project_profile_id_idx" ("profile_id"),
+    CONSTRAINT "project_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
-
--- CreateIndex
-CREATE INDEX "professional_link_profile_id_idx" ON "professional_link"("profile_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "professional_link_profile_id_label_key" ON "professional_link"("profile_id", "label");
-
--- CreateIndex
-CREATE INDEX "skill_profile_id_idx" ON "skill"("profile_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "skill_profile_id_name_key" ON "skill"("profile_id", "name");
-
--- CreateIndex
-CREATE INDEX "work_experience_profile_id_idx" ON "work_experience"("profile_id");
-
--- CreateIndex
-CREATE INDEX "project_profile_id_idx" ON "project"("profile_id");
-
--- AddForeignKey
-ALTER TABLE "professional_link" ADD CONSTRAINT "professional_link_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "skill" ADD CONSTRAINT "skill_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_experience" ADD CONSTRAINT "work_experience_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "project" ADD CONSTRAINT "project_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
