@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "cockroachdb"
+}
+
+model Profile {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  description       String
+  professionalLinks ProfessionalLink[]
+  skills            Skill[]
+  workExperiences   WorkExperience[]
+  projects          Project[]
+
+  @@map("profile")
+}
+
+model ProfessionalLink {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId String  @map("profile_id") @db.Uuid
+  label     String
+  url       String  @db.String(2048)
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, label])
+  @@index([profileId])
+  @@map("professional_link")
+}
+
+model Skill {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId String  @map("profile_id") @db.Uuid
+  name      String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, name])
+  @@index([profileId])
+  @@map("skill")
+}
+
+model WorkExperience {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId   String    @map("profile_id") @db.Uuid
+  company     String
+  position    String
+  achievement String?
+  startedAt   DateTime  @map("started_at") @db.Timestamp(3)
+  endedAt     DateTime? @map("ended_at") @db.Timestamp(3)
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("work_experience")
+}
+
+model Project {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId   String  @map("profile_id") @db.Uuid
+  name        String
+  description String
+  url         String  @db.String(2048)
+  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("project")
+}

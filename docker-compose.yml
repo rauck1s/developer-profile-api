@@ -1,0 +1,67 @@
+name: developer-profile
+
+services:
+  cockroach:
+    image: cockroachdb/cockroach:v26.2.2
+    command: start-single-node --insecure
+    restart: unless-stopped
+    ports:
+      - '26257:26257'
+      - '8080:8080'
+    volumes:
+      - cockroach-data:/cockroach/cockroach-data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - cockroach sql --insecure --host=localhost:26257 --execute='SELECT 1'
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  database-init:
+    image: cockroachdb/cockroach:v26.2.2
+    depends_on:
+      cockroach:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        cockroach sql --insecure --host=cockroach:26257 \
+          --execute='CREATE USER IF NOT EXISTS developer_profile_app;'
+        cockroach sql --insecure --host=cockroach:26257 \
+          --execute="ALTER ROLE developer_profile_app SET create_table_with_schema_locked = 'false';"
+        cockroach sql --insecure --host=cockroach:26257 \
+          --execute='CREATE DATABASE IF NOT EXISTS developer_profile;'
+        cockroach sql --insecure --host=cockroach:26257 \
+          --execute='ALTER DATABASE developer_profile OWNER TO developer_profile_app;'
+    restart: 'no'
+
+  migrate:
+    build:
+      context: .
+      target: tools
+    environment:
+      DATABASE_URL: postgresql://developer_profile_app@cockroach:26257/developer_profile?sslmode=disable
+    depends_on:
+      database-init:
+        condition: service_completed_successfully
+    command: sh -c "npm run db:deploy && npm run db:seed"
+    restart: 'no'
+
+  app:
+    build:
+      context: .
+      target: runtime
+    environment:
+      DATABASE_URL: postgresql://developer_profile_app@cockroach:26257/developer_profile?sslmode=disable
+      PORT: 3000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - '3000:3000'
+    restart: unless-stopped
+
+volumes:
+  cockroach-data:
